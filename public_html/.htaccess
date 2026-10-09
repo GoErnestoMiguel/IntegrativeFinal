@@ -1,0 +1,9 @@
+Require all granted
+Options -Indexes
+DirectoryIndex index.php
+<FilesMatch "(?i)\.(sql|md|log|ini|env|bak|zip|csv|xlsx)$">
+ Require all denied
+</FilesMatch>
+<FilesMatch "^(mail-config|admin-account|migrate-accounts)\.php$">
+ Require all denied
+</FilesMatch>

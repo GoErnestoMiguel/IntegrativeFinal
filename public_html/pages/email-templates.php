@@ -1,0 +1,25 @@
+<?php
+// Email-safe tables and inline styles; dynamic text must always be escaped.
+function email_escape($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+function email_layout($title, $preview, $content) {
+ $title=email_escape($title); $preview=email_escape($preview);
+ return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'.$title.'</title></head><body style="margin:0;padding:0;background:#f2f5fa;color:#1b2c43;font-family:Arial,Helvetica,sans-serif;line-height:1.6"><div style="display:none;max-height:0;overflow:hidden;mso-hide:all">'.$preview.'</div><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f2f5fa"><tr><td align="center" style="padding:28px 12px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;background:#ffffff;border:1px solid #dee6ef;border-radius:20px;overflow:hidden"><tr><td style="background:#122c50;padding:28px;color:#ffffff;border-radius:20px 20px 0 0;border-bottom:4px solid #ffd65a"><div style="font-size:25px;font-weight:bold;letter-spacing:-.5px">Tulong Bayan</div><div style="font-size:12px;color:#c2d8f6;margin-top:3px">TUPAD &amp; 4Ps community desk</div></td></tr><tr><td style="padding:28px"><h1 style="font-size:25px;line-height:1.25;color:#122c50;margin:0 0 20px">'.$title.'</h1>'.$content.'</td></tr><tr><td style="padding:20px 28px;background:#f8faff;border-top:1px solid #dee6ef;font-size:12px;color:#586b80;border-radius:0 0 20px 20px">Sent by the Tulong Bayan application system.<br>For assistance, contact your barangay help desk. Keep verification codes and login details private.</td></tr></table></td></tr></table></body></html>';
+}
+function verification_email_html($code) {
+ return email_layout('Verify your email', 'Your verification code expires in 10 minutes.', '<p style="margin:0 0 20px">Use the code below to verify your email address and continue your request.</p><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px;background:#edf3fc;border:1px solid #dee6ef;border-radius:14px"><div style="font-size:11px;letter-spacing:1.5px;color:#586b80;font-weight:bold">YOUR VERIFICATION CODE</div><div style="font-size:36px;font-weight:bold;letter-spacing:6px;color:#2456a6;margin:8px 0">'.email_escape($code).'</div><div style="font-size:13px;color:#586b80">Valid for 10 minutes</div></td></tr></table><p>Enter this code in the verification form in the same browser where you requested it. Only the latest code works.</p><p style="font-size:13px;color:#586b80;margin-bottom:0">Did not request this code? You can safely ignore this email.</p>');
+}
+function registration_email_html($name, $id, $username, $password, $url, $replacement=false) {
+ $title=$replacement?'Your login details have been updated':'Application received';
+ $opening=$replacement?'Use your updated login details below to view your current application status.':'We have received your application and it is being processed. Staff will review your details and contact you about the next steps.';
+ $content='<p style="margin:0 0 16px">Hello '.email_escape($name).',</p><p>'.$opening.'</p>';
+ if (!$replacement) $content.='<p style="background:#fff8e6;border-left:4px solid #e6b32d;padding:12px 16px;border-radius:8px;font-size:14px">This acknowledges receipt of your application. It is not confirmation of approval.</p>';
+ $content.='<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#edf3fc;border:1px solid #dee6ef;border-radius:14px;margin:24px 0">';
+ foreach(['Application ID'=>$id,'Username'=>$username]+['Temporary password'=>$password] as $label=>$value) {
+  $content.='<tr><td style="padding:12px 18px;border-bottom:1px solid #dee6ef"><div style="font-size:12px;color:#586b80">'.$label.'</div><div style="font-size:16px;font-weight:bold;color:#122c50;overflow-wrap:anywhere;word-break:break-all">'.email_escape($value).'</div></td></tr>';
+ }
+ $content.='</table><p>'.'This temporary password expires in 24 hours. You must change it before viewing your profile.'. ' Your profile shows your application status and assigned work dates.</p>';
+ if (filter_var($url,FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($url,PHP_URL_SCHEME) ?? ''),['http','https'],true)) {
+  $content.='<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0"><tr><td bgcolor="#2456a6" style="border-radius:10px"><a href="'.email_escape($url).'" style="display:inline-block;padding:14px 24px;color:#ffffff;font-size:15px;font-weight:bold;text-decoration:none;border:1px solid #2456a6;border-radius:10px">Open My Profile &rarr;</a></td></tr></table><p style="font-size:12px;color:#586b80;overflow-wrap:anywhere;word-break:break-all">If the button does not work, copy this address into your browser:<br>'.email_escape($url).'</p>';
+ }
+ return email_layout($title,$opening,$content);
+}
